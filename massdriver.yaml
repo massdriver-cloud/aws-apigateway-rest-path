@@ -1,0 +1,80 @@
+# This file will be used to generate all of the schema-*.json files in a bundle
+schema: draft-07
+name: "aws-apigateway-rest-path"
+description: "REST path in API gateway for nested routes"
+source_url: github.com/massdriver-cloud/aws-apigateway-rest-path
+access: private
+type: "infrastructure"
+
+steps:
+  - path: src
+    provisioner: terraform
+
+# schema-params.json
+# JSON Schema sans-fields above
+params:
+  # Examples will show up as configuration presets in the UI _and_
+  # they will be used to test configurations of the bundle.
+  examples:
+    - __name: Default
+      path: "{proxy+}"
+      http_method: 
+  required:
+    - path
+    - http_method
+  properties:
+    path:
+      type: string
+      title: Path
+      description: Last path segment of this API resource. Entering {proxy+} will respond to all paths.
+      pattern: "((^[a-zA-Z0-9-_]+$)|(^\\{[a-zA-Z0-9-_]+\\}$)|(^\\{proxy\\+\\}$))"
+      message:
+        pattern: "Correct format of a path is lowercase letters, numbers, dashes and underscores. For capturing paths the same rules apply but the path must start with and end with curly braces."
+    http_method:
+      type: string
+      title: HTTP Method
+      description: The HTTP method(s) that this route should respond to.
+      default: ANY
+      enum:
+        - POST
+        - GET
+        - PUT
+        - DELETE
+        - HEAD
+        - OPTIONS
+        - ANY
+
+# schema-connections.json
+# Named list of input connections (artifacts) (map[name]artifact)
+connections:
+  properties:
+    api_gateway:
+      $ref: massdriver/aws-api-gateway-rest-api
+    parent_path:
+      $ref: massdriver/aws-api-gateway-path
+    aws_authentication:
+      $ref: massdriver/aws-iam-role
+  oneOf:
+    - required:
+        - api_gateway
+        - aws_authentication
+    - required:
+        - parent_path
+        - aws_authentication
+
+
+# schema-artifacts.json
+# Named list of output artifacts  (map[name]artifact)
+artifacts:
+  required:
+    - path
+  properties:
+    path:
+      $ref: massdriver/aws-api-gateway-path
+
+# schema-ui.json
+# List of form customizations for params-schema
+# learn more about widgets & fields: https://docs.massdriver.cloud/bundles/custom-widgets-and-fields
+ui:
+  ui:order:
+    - "*"
